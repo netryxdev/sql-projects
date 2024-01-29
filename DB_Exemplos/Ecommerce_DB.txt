@@ -1,0 +1,121 @@
+CREATE TABLE t_roles (
+	role_id int IDENTITY(1, 1) PRIMARY KEY,
+	role_name varchar(35) not null,
+	--CONSTRAINT PK_T_ROLES_ROLE_ID PRIMARY KEY(role_id)
+);
+
+drop table t_roles
+
+INSERT INTO t_roles
+(role_name)
+VALUES
+('admin'),
+('employee'),
+('customer');
+
+select * from t_roles;
+
+CREATE TABLE t_users (
+	user_id int identity(1,1) primary key,
+	user_name varchar(60) not null,
+	user_password varchar(100) not null,
+	user_address varchar(100) not null,
+	user_role int,
+	foreign key (user_role) REFERENCES t_roles (role_id)
+);
+
+INSERT INTO t_users
+(user_name, user_password, user_address, user_role)
+VALUES
+('pierre', '123123', 'gravata', 3),
+('heitor', '123123', 'gravata', 2);
+--('kurosawa', '123123', 'gravata', 3),
+--('emilly', '123123', 'gravata', 2);
+
+select * from t_users;
+
+update t_users set user_address = 'vila dos spellcasters' where user_name = 'kurosawa';
+
+alter table t_users ADD user_address VARCHAR(100);
+
+CREATE TABLE t_categories (
+	category_id int identity(1,1) primary key,
+	category_name varchar(50) not null,
+);
+
+insert into t_categories
+(category_name)
+VALUES 
+('game'),
+('console'),
+('pc')
+
+select * from t_categories
+
+CREATE TABLE t_products (
+	product_id int identity(1,1) primary key,
+	product_name varchar(100) not null,
+	product_description varchar(MAX) not null,
+	product_price decimal(18, 2) not null,
+	product_discount decimal(5,2) DEFAULT 0,
+	product_category int not null,
+	foreign key (product_category) references t_categories (category_id),
+);
+
+-- Inserindo 10 unidades de produtos
+INSERT INTO t_products (product_name, product_description, product_price, product_category)
+VALUES
+    ('Shadow of the Colossus', 'Best game of the ps2', 49.99, 1), -- Categoria: Game
+    ('Metal Gear Solid', 'Best game of the ps1', 39.99, 1), -- Categoria: Game
+    ('Nintendo 64', 'Descrição do Nintendo 64', 149.99, 2), -- Categoria: Console
+    ('PlayStation 2', 'Best console of all time', 99.99, 2), -- Categoria: Console
+    ('Xbox', 'Xbox Description here', 129.99, 2), -- Categoria: Console
+    ('MS-DOS PC', 'A retro classic PC', 50.99, 3), -- Categoria: PC
+    ('Super Mario World', 'Best Mario game from SNES', 29.99, 1), -- Categoria: Game
+    ('Nintendo Switch', 'Description Nintendo Switch', 299.99, 2), -- Categoria: Console
+    ('F-ZERO', 'Best race games of SNES', 44.99, 1), -- Categoria: Game
+    ('Super Nintendo', 'The famous SNES system', 100.00, 2); -- Categoria: PC
+
+-- Adicionando a coluna product_image_url com valor padrão
+ALTER TABLE t_products
+ADD product_image_url VARCHAR(MAX) DEFAULT 'https://gamesandcigarettes.files.wordpress.com/2017/11/maxresdefault2.jpg?w=1280';
+
+update t_products set product_img_url = 'https://www.skooterblog.com/wp-content/uploads/2014/08/IMG_0793.jpg'
+WHERE product_name = 'Super Nintendo'
+GO
+
+select * from t_products
+
+-- Alterar o nome da coluna usando sp_rename
+EXEC sp_rename 't_users.user_role', 'role_id', 'COLUMN';
+
+select * from t_products
+
+CREATE TABLE t_order_status(
+	status_id int identity(1,1) primary key,
+	status_name varchar(50) not null
+);
+
+INSERT INTO t_order_status
+(status_name) VALUES 
+('Cancelled'),
+('Processing'),
+('Awaiting Payment'),
+('Shipped'),
+('Delivered');
+
+select * from t_order_status
+
+CREATE TABLE t_orders(
+	order_id int identity(1,1) primary key,
+	user_id int FOREIGN KEY REFERENCES t_users(user_id),
+	order_date DATETIME2 not null,
+	status_id INT FOREIGN KEY REFERENCES t_order_status(status_id),
+);
+
+CREATE TABLE t_order_items(
+	order_item_id int identity (1,1) primary key,
+	order_id int FOREIGN KEY REFERENCES t_orders(order_id),
+	product_id int FOREIGN KEY REFERENCES t_products(product_id),
+	quantity int not null
+);
