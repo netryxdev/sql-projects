@@ -119,3 +119,18 @@ CREATE TABLE t_order_items(
 	product_id int FOREIGN KEY REFERENCES t_products(product_id),
 	quantity int not null
 );
+
+CREATE TABLE t_cart_items(
+	cart_item_id int identity(1,1) PRIMARY KEY,
+	user_id int FOREIGN KEY REFERENCES t_users(user_id),
+	product_id int FOREIGN KEY REFERENCES t_products(product_id),
+	quantity int not null
+);
+
+CREATE TABLE t_reviews(
+	review_id int identity(1,1) PRIMARY KEY,
+	user_id int FOREIGN KEY REFERENCES t_users(user_id),
+	product_id int FOREIGN KEY REFERENCES t_products(product_id),
+	rating INT NOT NULL,
+    comment VARCHAR(MAX),
+);
