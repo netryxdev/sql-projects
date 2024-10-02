@@ -29,6 +29,7 @@ CREATE TABLE t_usuario_char (
     id_kekkei_genkai INT NULL -- FK para t_kekkei_genkais 
     dv_portao BIT NOT NULL DEFAULT 0, -- 1 se personagem liberou portao
     dv_missao_andamento TINYINT(1) DEFAULT 0, -- 0 para não, 1 para sim
+    img_url_char VARCHAR(255),
     FOREIGN KEY (id_usuario) REFERENCES t_usuario(id_usuario),
     FOREIGN KEY (id_clan) REFERENCES t_clan(id_clan),
     FOREIGN KEY (id_kekkei_genkai) REFERENCES t_kekkei_genkai(id_kekkei_genkai),
@@ -55,12 +56,20 @@ CREATE TABLE t_missao (
     dinheiro_missao DECIMAL (18,2) DEFAULT 0,
     Duration TIME,
     id_oponente INT NULL, -- FK para t_oponente (somente para missões ativas)
+    img_url_missao VARCHAR(255) DEFAULT NULL,
     CONSTRAINT `fk_t_missao_t_missao_tipo` FOREIGN KEY (`id_missao_tipo`) REFERENCES `t_missao_tipo` (`id_missao_tipo`),
     CONSTRAINT fk_t_missao_oponente FOREIGN KEY (id_oponente) REFERENCES t_oponente(id_oponente)
 );
 
 CREATE TABLE t_atributo (
     id_atributo INT PRIMARY KEY AUTO_INCREMENT,
+    nm_atributo VARCHAR (100),
+    nm_atributo_desc TEXT,
+    img_url_atributo VARCHAR(255) 
+)
+
+CREATE TABLE t_atributo_char (
+    id_atributo_char INT PRIMARY KEY AUTO_INCREMENT,
     id_usuario_char INT,
     vida INT,
     chakra INT,
@@ -82,13 +91,15 @@ CREATE TABLE t_atributo (
 CREATE TABLE t_clan(
     id_clan INT PRIMARY KEY AUTO_INCREMENT,
     nm_clan VARCHAR(30),
-    nm_clan_desc TEXT
+    nm_clan_desc TEXT,
+    img_url_clan VARCHAR(255)
 )
 
-CREATE TABLE t_kekkei_genkais (
+CREATE TABLE t_kekkei_genkai (
     id_kekkei_genkai INT AUTO_INCREMENT PRIMARY KEY,
     nm_kekkei_genkai VARCHAR(100),
     id_clan INT,
+    img_url_kekkei_genkai VARCHAR(255),
     FOREIGN KEY (id_clan) REFERENCES t_clan (id_clan)
 );
 
@@ -111,6 +122,7 @@ CREATE TABLE t_jutsu (
     dv_exclusivo_clan TINYINT(1) DEFAULT 0, -- 1 se é exclusivo de clã
     dv_exclusivo_portao TINYINT(1) DEFAULT 0, -- 1 se é exclusivo para quem tem portão aberto
     dv_exclusivo_tipo TINYINT(1) DEFAULT 0, -- 1 se é exclusivo de um tipo de ninja (taijutsu, etc.)
+    img_url_jutsu VARCHAR(255),
     FOREIGN KEY (id_jutsu_tipo) REFERENCES t_jutsu_tipo(id_jutsu_tipo)
 );
 
@@ -152,6 +164,7 @@ CREATE TABLE t_oponente (
     id_tipo_oponente INT,        -- Tipo de oponente('comum', 'chefe', 'procurado')
     recompensa_dinheiro INT,   -- Dinheiro dado ao derrotá-lo
     recompensa_xp INT,          -- XP dado ao derrotá-lo
+    img_url_oponente VARCHAR(255),
     FOREIGN KEY (id_tipo_oponente) REFERENCES t_tipo_oponente(id_tipo_oponente)
 );
 
