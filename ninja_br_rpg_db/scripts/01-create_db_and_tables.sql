@@ -20,7 +20,7 @@ CREATE TABLE t_ninja_tipo(
 CREATE TABLE t_usuario_char (
     id_usuario_char INT PRIMARY KEY AUTO_INCREMENT,
     id_usuario INT NOT NULL
-    nm_char NVARCHAR(20) NOT NULL,
+    nm_char NVARCHAR(50) NOT NULL,
     id_graduacao INT DEFAULT 1,
     lvl_char INT DEFAULT 1,
     xp_char INT DEFAULT 0,
@@ -28,6 +28,7 @@ CREATE TABLE t_usuario_char (
     id_clan INT NULL, --FK para t_clans (null se o personagem não tem clã)
     id_kekkei_genkai INT NULL -- FK para t_kekkei_genkais 
     dv_portao BIT NOT NULL DEFAULT 0, -- 1 se personagem liberou portao
+    dv_missao_andamento TINYINT(1) DEFAULT 0, -- 0 para não, 1 para sim
     FOREIGN KEY (id_usuario) REFERENCES t_usuario(id_usuario),
     FOREIGN KEY (id_clan) REFERENCES t_clan(id_clan),
     FOREIGN KEY (id_kekkei_genkai) REFERENCES t_kekkei_genkai(id_kekkei_genkai),
@@ -47,11 +48,15 @@ CREATE TABLE t_missao (
     id_missao INT PRIMARY KEY AUTO_INCREMENT,
     id_missao_tipo INT,
     nm_missao VARCHAR(30),
-    nm_missao_desc VARCHAR(100),
-    DifficultyLevel INT,
-    ExperienceReward INT,
-    Duration TIME
-    CONSTRAINT `fk_t_missao_t_missao_tipo` FOREIGN KEY (`id_missao_tipo`) REFERENCES `t_missao_tipo` (`id_missao_tipo`)
+    dv_passiva TINYINT(1) DEFAULT 0; -- 1 para missao passiva, 0 para ativa
+    nm_missao_desc TEXT,
+    lvl_missao INT,
+    xp_missao INT,
+    dinheiro_missao DECIMAL (18,2) DEFAULT 0,
+    Duration TIME,
+    id_oponente INT NULL, -- FK para t_oponente (somente para missões ativas)
+    CONSTRAINT `fk_t_missao_t_missao_tipo` FOREIGN KEY (`id_missao_tipo`) REFERENCES `t_missao_tipo` (`id_missao_tipo`),
+    CONSTRAINT fk_t_missao_oponente FOREIGN KEY (id_oponente) REFERENCES t_oponente(id_oponente)
 );
 
 CREATE TABLE t_atributo (
@@ -59,20 +64,25 @@ CREATE TABLE t_atributo (
     id_usuario_char INT,
     vida INT,
     chakra INT,
-    forca INT,
-    defesa INT,
-    resistencia INT,
-    inteligencia INT,
-    selo INT,
-    energia INT,
-    habilidade INT,
+    stamina INT,
+    energia INT,              -- Usado para aumentar vida, chakra, stamina
+    forca INT,                -- Usado para taijutsu
+    inteligencia INT,         -- Usado para ninjutsu
+    mentalidade INT,          -- Usado para genjutsu
+    def_fisica INT,           -- Defesa contra taijutsu
+    def_chakra INT,           -- Defesa contra ninjutsu
+    def_mental INT,           -- Defesa contra genjutsu
+    precisao INT,             -- Chance de acerto de ataques/jutsus
+    perfuracao INT,           -- Capacidade de ignorar parte da defesa
+    critico DECIMAL(3,2),     -- Chance de causar dano crítico (ex: 0.01 = 1% para 1.00 = 100%)
+    evasao INT,               -- Chance de evitar ataques inimigos
     FOREIGN KEY (id_usuario_char) REFERENCES t_usuario_char(id_usuario_char)
 );
 
 CREATE TABLE t_clan(
     id_clan INT PRIMARY KEY AUTO_INCREMENT,
     nm_clan VARCHAR(30),
-    nm_clan_desc VARCHAR(100)
+    nm_clan_desc TEXT
 )
 
 CREATE TABLE t_kekkei_genkais (
@@ -92,11 +102,16 @@ CREATE TABLE t_jutsu (
     id_jutsu INT AUTO_INCREMENT PRIMARY KEY,
     nm_jutsu VARCHAR(50),
     id_jutsu_tipo INT, -- FK para t_jutsu_types (tipo de jutsu: taijutsu, ninjutsu, genjutsu)
-    nm_jutsu_desc VARCHAR(100),
-    dv_jutsu_clan TINYINT(1) DEFAULT 0, -- 1 se é exclusivo de clã
-    dv_justu_portao TINYINT(1) DEFAULT 0, -- 1 se é exclusivo para quem tem portão aberto
-    dv_jutsu_tipo TINYINT(1) DEFAULT 0, -- 1 se é exclusivo de um tipo de ninja (taijutsu, etc.)
-    FOREIGN KEY (id_jutsu_type) REFERENCES t_jutsu_types(id_jutsu_type)
+    custo_jutsu INT, --usado para tirar o custo da stamina ou do chakra
+    nm_jutsu_desc TEXT,
+    dano_jutsu INT DEFAULT 0,
+    precisao_jutsu DECIMAL(3,2) DEFAULT 0, --precisao necessaria para acertar
+    dv_oponente TINYINT(1) DEFAULT 0,
+    dv_jutsu_passivo TINYINT(1) DEFAULT 0,
+    dv_exclusivo_clan TINYINT(1) DEFAULT 0, -- 1 se é exclusivo de clã
+    dv_exclusivo_portao TINYINT(1) DEFAULT 0, -- 1 se é exclusivo para quem tem portão aberto
+    dv_exclusivo_tipo TINYINT(1) DEFAULT 0, -- 1 se é exclusivo de um tipo de ninja (taijutsu, etc.)
+    FOREIGN KEY (id_jutsu_tipo) REFERENCES t_jutsu_tipo(id_jutsu_tipo)
 );
 
 CREATE TABLE t_clan_jutsu (
@@ -110,10 +125,9 @@ CREATE TABLE t_clan_jutsu (
 CREATE TABLE t_usuario_char_jutsu (
     id_usuario_char INT,
     id_jutsu INT,
-    dt_learned TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_usuario_char) REFERENCES t_usuario_char(id_usuario_char),
     FOREIGN KEY (id_jutsu) REFERENCES t_jutsu(id_jutsu),
-    PRIMARY KEY (id_char, id_jutsu)
+    PRIMARY KEY (id_usuario_char, id_jutsu)
 );
 
 CREATE TABLE t_graduacao (
@@ -122,3 +136,73 @@ CREATE TABLE t_graduacao (
     nm_graduacao_desc TEXT,         -- Descrição opcional da graduação
     lvl_graduacao INT               -- lvl minimo para essa graduacao
 );
+
+CREATE TABLE t_treinamento (
+    id_treinamento INT PRIMARY KEY AUTO_INCREMENT,
+    id_usuario_char INT,
+    horas_treinadas INT,          -- Quantidade de horas treinadas
+    xp_ganho INT,                 -- XP ganho com o treinamento
+    FOREIGN KEY (id_usuario_char) REFERENCES t_usuario_char(id_usuario_char)
+);
+
+CREATE TABLE t_oponente (
+    id_oponente INT PRIMARY KEY AUTO_INCREMENT,
+    nm_oponente VARCHAR(100), -- Nome do oponente (ninja procurado ou NPC)
+    lvl_oponente INT,         -- Nível do oponente
+    id_tipo_oponente INT,        -- Tipo de oponente('comum', 'chefe', 'procurado')
+    recompensa_dinheiro INT,   -- Dinheiro dado ao derrotá-lo
+    recompensa_xp INT,          -- XP dado ao derrotá-lo
+    FOREIGN KEY (id_tipo_oponente) REFERENCES t_tipo_oponente(id_tipo_oponente)
+);
+
+CREATE TABLE t_tipo_oponente(
+    id_tipo_oponente INT PRIMARY KEY AUTO_INCREMENT,
+    nm_tipo_oponente VARCHAR (50), -- Tipo de oponente('comum', 'chefe', 'procurado')
+)
+
+CREATE TABLE t_oponente_atributo (
+    id_oponente_atributo INT PRIMARY KEY AUTO_INCREMENT,
+    id_oponente INT,
+    vida INT,
+    chakra INT,
+    stamina INT,
+    forca INT,           -- Usado para taijutsu
+    inteligencia INT,    -- Usado para ninjutsu
+    mentalidade INT,     -- Usado para genjutsu
+    def_fisica INT,      -- Defesa contra taijutsu
+    def_chakra INT,      -- Defesa contra ninjutsu
+    def_mental INT,      -- Defesa contra genjutsu
+    precisao DECIMAL(3,2), -- Precisão do oponente (chance de acerto)
+    perfuracao DECIMAL(3,2), -- Capacidade de ignorar defesa
+    critico DECIMAL(3,2), -- Chance de crítico
+    evasao DECIMAL(3,2),  -- Chance de evitar ataques
+    FOREIGN KEY (id_oponente) REFERENCES t_oponente(id_oponente)
+);
+
+CREATE TABLE t_oponente_jutsu (
+    id_oponente_jutsu INT PRIMARY KEY AUTO_INCREMENT,
+    id_oponente INT,
+    id_jutsu INT,
+    FOREIGN KEY (id_jutsu) REFERENCES t_jutsu(id_jutsu),
+    FOREIGN KEY (id_jutsu_tipo) REFERENCES t_jutsu_tipo(id_jutsu_tipo)
+);
+
+CREATE TABLE t_grind_limitador (
+    id_usuario_char INT,
+    id_oponente INT,
+    dt_ultima_batalha DATETIME, -- Controla a última vez que o jogador lutou contra o oponente
+    tentativas_restantes INT DEFAULT 5, -- Limite de batalhas diárias
+    FOREIGN KEY (id_usuario_char) REFERENCES t_usuario_char(id_usuario_char),
+    FOREIGN KEY (id_oponente) REFERENCES t_oponente(id_oponente)
+);
+
+CREATE TABLE t_missao_passiva_usuario_controle (
+    id_usuario_char INT,
+    id_missao INT,
+    dt_inicio DATETIME,
+    dt_fim DATETIME,
+    FOREIGN KEY (id_usuario_char) REFERENCES t_usuario_char(id_usuario_char),
+    FOREIGN KEY (id_missao) REFERENCES t_missao(id_missao)
+);
+
+-- comecar a fazer as telas a partir daqui.
