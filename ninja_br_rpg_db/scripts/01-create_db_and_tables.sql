@@ -27,13 +27,14 @@ CREATE TABLE t_usuario_char (
     id_ninja_tipo INT,
     id_clan INT NULL, --FK para t_clans (null se o personagem não tem clã)
     id_kekkei_genkai INT NULL -- FK para t_kekkei_genkais 
-    dv_portao BIT NOT NULL DEFAULT 0, -- 1 se personagem liberou portao
+    dv_portao TINYINT(1) DEFAULT 0, -- 1 se personagem liberou portao
     dv_missao_andamento TINYINT(1) DEFAULT 0, -- 0 para não, 1 para sim
-    img_url_char VARCHAR(255),
+    id_img_char INT,
     FOREIGN KEY (id_usuario) REFERENCES t_usuario(id_usuario),
     FOREIGN KEY (id_clan) REFERENCES t_clan(id_clan),
     FOREIGN KEY (id_kekkei_genkai) REFERENCES t_kekkei_genkai(id_kekkei_genkai),
     FOREIGN KEY (id_graduacao) REFERENCES t_graduacao(id_graduacao)
+    FOREIGN KEY (id_img_char) REFERENCES t_img_char(id_img_char)
     CONSTRAINT chk_clan_or_gates CHECK (
         (id_clan IS NOT NULL AND id_kekkei_genkai IS NOT NULL AND has_gates = 0) OR 
         (id_clan IS NULL AND id_kekkei_genkai IS NULL AND has_gates = 1)
@@ -56,7 +57,11 @@ CREATE TABLE t_missao (
     dinheiro_missao DECIMAL (18,2) DEFAULT 0,
     Duration TIME,
     id_oponente INT NULL, -- FK para t_oponente (somente para missões ativas)
-    img_url_missao VARCHAR(255) DEFAULT NULL,
+    id_img_local VARCHAR(255) DEFAULT NULL,
+    id_img_oponente VARCHAR(255) DEFAULT NULL,
+    dv_img TINYINT(1) DEFAULT 0,
+    FOREIGN KEY (id_img_local) REFERENCES t_img_local(id_img_local),
+    FOREIGN KEY (id_img_oponente) REFERENCES t_img_oponente(id_img_oponente),
     CONSTRAINT `fk_t_missao_t_missao_tipo` FOREIGN KEY (`id_missao_tipo`) REFERENCES `t_missao_tipo` (`id_missao_tipo`),
     CONSTRAINT fk_t_missao_oponente FOREIGN KEY (id_oponente) REFERENCES t_oponente(id_oponente)
 );
@@ -164,7 +169,7 @@ CREATE TABLE t_oponente (
     id_tipo_oponente INT,        -- Tipo de oponente('comum', 'chefe', 'procurado')
     recompensa_dinheiro INT,   -- Dinheiro dado ao derrotá-lo
     recompensa_xp INT,          -- XP dado ao derrotá-lo
-    img_url_oponente VARCHAR(255),
+    id_img_oponente VARCHAR(255),
     FOREIGN KEY (id_tipo_oponente) REFERENCES t_tipo_oponente(id_tipo_oponente)
 );
 
@@ -218,4 +223,42 @@ CREATE TABLE t_missao_passiva_usuario_controle (
     FOREIGN KEY (id_missao) REFERENCES t_missao(id_missao)
 );
 
+--Criar tabela para imagens dos Char
+CREATE TABLE t_img_char(
+    id_img_char INT PRIMARY KEY AUTO_INCREMENT,
+    nm_img_char VARCHAR(100),
+    url_img_char VARCHAR(255)
+)
+
+CREATE TABLE t_img_oponente(
+    id_img_oponente INT PRIMARY KEY AUTO_INCREMENT,
+    nm_img_oponente VARCHAR(100),
+    url_img_oponente VARCHAR(255)
+)
+
+--Criar tabela para imagens dos Char
+CREATE TABLE t_img_local(
+    id_img_local INT PRIMARY KEY AUTO_INCREMENT,
+    nm_img_local VARCHAR(100),
+    url_img_local VARCHAR(255)
+)
+
+--Criar tabela para imagens dos npc
+CREATE TABLE t_img_npc(
+    id_img_npc INT PRIMARY KEY AUTO_INCREMENT,
+    nm_img_npc VARCHAR(100),
+    url_img_npc VARCHAR(255)
+)
+
+--Criar tabela para imagens dos oponentes ? 
+
+
 -- comecar a fazer as telas a partir daqui.
+-- tabelas futuras:
+
+-- tabela dos itens e fazer tabela item_char
+CREATE TABLE t_item(
+    id_img_item INT PRIMARY KEY AUTO_INCREMENT,
+    nm_img_item VARCHAR(100),
+    url_img_item VARCHAR(255)
+)
